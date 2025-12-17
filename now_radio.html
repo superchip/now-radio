@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>רדיו פחד ⇄ אהבה</title>
+  <style>
+    :root{
+      --w: min(900px, 92vw);
+      --bg: #1b140f;
+      --wood1:#5a3b27;
+      --wood2:#3c2518;
+      --gold:#c9a46b;
+      --text:#ead7b4;
+      --muted:#cbb68f;
+    }
+
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 50% 20%, #2a1c14, var(--bg));
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display:flex;
+      min-height:100vh;
+      align-items:center;
+      justify-content:center;
+      padding:28px 14px;
+    }
+
+    .wrap{ width: var(--w); }
+
+    .card{
+      border-radius: 22px;
+      padding: 22px;
+      background: linear-gradient(135deg, var(--wood1), var(--wood2));
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .inner{
+      border-radius: 18px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.05));
+      border: 2px solid rgba(255,255,255,.06);
+    }
+
+    .screen{
+      border-radius: 16px;
+      padding: 18px 18px 14px;
+      background: linear-gradient(180deg, #0b0b0c, #151012);
+      border: 2px solid rgba(201,164,107,.45);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.04),
+        inset 0 18px 50px rgba(0,0,0,.6);
+      user-select:none;
+      touch-action:none;
+    }
+
+    /* Make labels visually LTR (fear on left, love on right) */
+    .topRow{
+      direction: ltr;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom: 12px;
+      letter-spacing:.5px;
+    }
+
+    .label{
+      font-weight: 800;
+      font-size: clamp(24px, 4.2vw, 46px);
+      color: var(--text);
+      opacity:.95;
+    }
+
+    /* Dial itself must be LTR */
+    .dial, .ticks, .needleArea { direction: ltr; }
+
+    .dial{
+      position:relative;
+      height: 86px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.15));
+      border: 1px solid rgba(255,255,255,.06);
+      overflow:hidden;
+      padding: 10px 12px 14px;
+    }
+
+    .line{
+      position:absolute;
+      left:12px; right:12px;
+      top: 42px;
+      height:2px;
+      background: rgba(233,215,180,.8);
+      opacity:.85;
+    }
+
+    .ticks{
+      position:absolute;
+      left:12px; right:12px;
+      top: 22px;
+      display:flex;
+      justify-content:space-between;
+      color: var(--muted);
+      font-weight:600;
+      font-size: 14px;
+      opacity:.9;
+    }
+
+    .ticks span{
+      position:relative;
+      padding-top: 18px;
+    }
+    .ticks span::before{
+      content:"";
+      position:absolute;
+      top: 0;
+      left:50%;
+      transform:translateX(-50%);
+      width:2px;
+      height: 12px;
+      background: rgba(233,215,180,.7);
+      border-radius:2px;
+    }
+
+    .needleArea{
+      position:absolute;
+      left:12px; right:12px;
+      top: 8px; bottom: 10px;
+      cursor: grab;
+    }
+    .needleArea:active{ cursor: grabbing; }
+
+    .needle{
+      position:absolute;
+      top: 0;
+      width: 0;
+      height: 100%;
+      transform: translateX(-50%);
+      pointer-events:none;
+    }
+
+    .needle::before{
+      content:"";
+      position:absolute;
+      top: 2px;
+      left: 0;
+      width: 2px;
+      height: 72px;
+      background: linear-gradient(180deg, #ffdca0, #c78e3e);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+      border-radius: 2px;
+    }
+
+    .diamond{
+      position:absolute;
+      top: 30px;
+      left: 1px;
+      width: 14px;
+      height: 14px;
+      background: linear-gradient(135deg, #ffcf7b, #c77f2f);
+      transform: translateX(-50%) rotate(45deg);
+      border-radius: 2px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.45);
+    }
+
+    .readout{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: rgba(233,215,180,.85);
+    }
+
+    .meter{
+      flex: 1;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.08);
+      direction: ltr;
+    }
+    .fill{
+      height:100%;
+      transform-origin: left center;
+      width:50%;
+      background: linear-gradient(90deg, #d45b50, #f0c26e, #6fd08b);
+    }
+    .lower{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      margin-top: 18px;
+      align-items:center;
+    }
+
+    .grill{
+      border-radius: 16px;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 1px 1px, rgba(0,0,0,.25) 1px, transparent 1px) 0 0/9px 9px,
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      border: 2px solid rgba(201,164,107,.35);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.35);
+      min-height: 120px;
+    }
+
+    .knobWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .knob{
+      width: 150px;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.22), transparent 45%),
+        radial-gradient(circle at 50% 55%, #242424 0%, #111 58%, #0a0a0a 100%);
+      border: 2px solid rgba(201,164,107,.45);
+      box-shadow:
+        0 22px 40px rgba(0,0,0,.55),
+        inset 0 0 0 1px rgba(255,255,255,.05);
+      position:relative;
+      transform: rotate(var(--knob-rot, 0deg));
+      transition: transform .06s linear;
+      cursor: pointer;
+      touch-action:none;
+      user-select:none;
+    }
+    .knob::after{
+      content:"";
+      position:absolute;
+      inset: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.14), transparent 45%);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .marker{
+      position:absolute;
+      left:50%;
+      top: 10px;
+      width: 10px;
+      height: 22px;
+      transform: translateX(-50%);
+      border-radius: 4px;
+      background: linear-gradient(180deg, #ffdca0, #c78e3e);
+      box-shadow: 0 6px 16px rgba(0,0,0,.45);
+    }
+
+    .controls{
+      margin-top: 16px;
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:space-between;
+      color: rgba(233,215,180,.85);
+    }
+
+    .hint{
+      opacity:.85;
+      font-size: 13px;
+    }
+
+    @media (max-width: 680px){
+      .lower{ grid-template-columns: 1fr; }
+      .knob{ width: 130px; }
+    }
+
+    button.soundBtn{
+      border:1px solid rgba(201,164,107,.45);
+      background: rgba(0,0,0,.25);
+      color: rgba(233,215,180,.92);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight:600;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="inner">
+        <div class="screen" id="screen">
+          <!-- LTR labels: פחד on left, אהבה on right -->
+          <div class="topRow">
+            <div class="label">פחד</div>
+            <div class="label">אהבה</div>
+          </div>
+
+          <div class="dial" id="dial">
+            <div class="line"></div>
+
+            <!-- Numbers LTR -->
+            <div class="ticks" aria-hidden="true">
+              <span>55</span>
+              <span>70</span>
+              <span>80</span>
+              <span>90</span>
+              <span>95</span>
+              <span>100</span>
+              <span>105</span>
+              <span>110</span>
+            </div>
+
+            <div class="needleArea" id="needleArea" role="application" aria-label="כוון את המחוג"></div>
+            <div class="needle" id="needle"><div class="diamond"></div></div>
+          </div>
+
+          <div class="readout">
+            <span>מצב פנימי</span>
+            <div class="meter" aria-hidden="true"><div class="fill" id="fill"></div></div>
+          </div>
+        </div>
+
+        <div class="lower">
+          <div class="grill">
+            <div class="hint">
+              גרור את המחוג או סובב את הכפתור.
+              <br/>שמאל = פחד • ימין = אהבה
+            </div>
+          </div>
+
+          <div class="knobWrap">
+            <div class="knob" id="knob" aria-label="כפתור כיוון" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+              <div class="marker"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="soundBtn" id="soundBtn">🔇 הפעל סאונד</button>
+            <div class="hint">אהבה = 528Hz • פחד = סטטיק</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dial = document.getElementById('dial');
+    const needle = document.getElementById('needle');
+    const needleArea = document.getElementById('needleArea');
+    const fill = document.getElementById('fill');
+    const knob = document.getElementById('knob');
+    const soundBtn = document.getElementById('soundBtn');
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    // ==========================================================
+    // RADIO-STYLE "TUNING RESISTANCE"
+    // targetValue follows pointer; actualValue follows targetValue
+    // with inertia + damping + detents (sticky stations).
+    // ==========================================================
+    let actualValue = 50;   // what you see/hear (0..100)
+    let targetValue = 50;   // where user tries to go (0..100)
+    let velocity = 0;
+
+    // "Stations" (detents). Feel free to tweak.
+    const stations = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+    // Tuning feel parameters
+    const kSpring = 0.10;      // attraction to target
+    const damping = 0.78;      // friction
+    const maxStepVel = 3.5;    // max speed (value units per frame-ish)
+    const detentRadius = 3.2;  // within this range, it becomes sticky
+    const detentPull = 0.22;   // how strongly it locks onto a station
+
+    let animOn = false;
+    function startAnim(){
+      if(animOn) return;
+      animOn = true;
+      requestAnimationFrame(tick);
+    }
+
+    function nearestStation(v){
+      let best = stations[0], bestD = Infinity;
+      for(const s of stations){
+        const d = Math.abs(s - v);
+        if(d < bestD){ bestD = d; best = s; }
+      }
+      return {station: best, dist: bestD};
+    }
+
+    function tick(){
+      // spring towards target
+      const delta = targetValue - actualValue;
+      velocity += delta * kSpring;
+
+      // detent stickiness near stations (like "clicky" radio stops)
+      const {station, dist} = nearestStation(actualValue);
+      if(dist < detentRadius){
+        // add force pulling to station, stronger the closer you are
+        const pull = (1 - (dist / detentRadius)) * detentPull;
+        velocity += (station - actualValue) * pull;
+      }
+
+      // damping & speed limit
+      velocity *= damping;
+      velocity = clamp(velocity, -maxStepVel, maxStepVel);
+
+      // apply motion
+      actualValue += velocity;
+      actualValue = clamp(actualValue, 0, 100);
+
+      render(actualValue);
+
+      // continue if moving or target differs
+      const stillMoving = Math.abs(velocity) > 0.001 || Math.abs(targetValue - actualValue) > 0.02;
+      if(stillMoving){
+        requestAnimationFrame(tick);
+      }else{
+        animOn = false;
+      }
+    }
+
+    // ==========================================================
+    // SOUND (Love=528Hz tone, Fear=static noise), crossfaded
+    // ==========================================================
+    let audioCtx = null;
+    let master = null;
+    let isSoundOn = false;
+
+    let fearGain, loveGain;
+    let fearNodes = null;
+    let loveNodes = null;
+
+    function ensureAudio(){
+      if(audioCtx) return;
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      master = audioCtx.createGain();
+      master.gain.value = 0; // start muted
+      master.connect(audioCtx.destination);
+
+      // FEAR: static noise (radio hiss)
+      fearGain = audioCtx.createGain();
+      fearGain.gain.value = 0;
+      fearGain.connect(master);
+
+      const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for(let i=0;i<data.length;i++){
+        data[i] = (Math.random() * 2 - 1);
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuf;
+      noise.loop = true;
+
+      // Shape static: highpass + bandpass for "radio" hiss
+      const hp = audioCtx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1200;
+
+      const bp = audioCtx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 2800;
+      bp.Q.value = 0.8;
+
+      // Slight amplitude wobble to feel alive
+      const fearWobble = audioCtx.createOscillator();
+      fearWobble.type = 'sine';
+      fearWobble.frequency.value = 0.55;
+
+      const fearWobbleGain = audioCtx.createGain();
+      fearWobbleGain.gain.value = 0.08;
+
+      const fearAmp = audioCtx.createGain();
+      fearAmp.gain.value = 0.35; // base static level before crossfade
+
+      fearWobble.connect(fearWobbleGain);
+      fearWobbleGain.connect(fearAmp.gain);
+
+      noise.connect(hp);
+      hp.connect(bp);
+      bp.connect(fearAmp);
+      fearAmp.connect(fearGain);
+
+      noise.start();
+      fearWobble.start();
+
+      fearNodes = { hp, bp, fearAmp };
+
+      // LOVE: 528Hz sine tone (gentle)
+      loveGain = audioCtx.createGain();
+      loveGain.gain.value = 0;
+      loveGain.connect(master);
+
+      const loveOsc = audioCtx.createOscillator();
+      loveOsc.type = 'sine';
+      loveOsc.frequency.value = 528;
+
+      // Gentle tremolo
+      const trem = audioCtx.createOscillator();
+      trem.type = 'sine';
+      trem.frequency.value = 0.18;
+
+      const tremGain = audioCtx.createGain();
+      tremGain.gain.value = 0.06;
+
+      const loveAmp = audioCtx.createGain();
+      loveAmp.gain.value = 0.18; // base tone level before crossfade
+
+      trem.connect(tremGain);
+      tremGain.connect(loveAmp.gain);
+
+      // Warmth filter
+      const lp = audioCtx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 1400;
+      lp.Q.value = 0.6;
+
+      loveOsc.connect(loveAmp);
+      loveAmp.connect(lp);
+      lp.connect(loveGain);
+
+      loveOsc.start();
+      trem.start();
+
+      loveNodes = { lp };
+    }
+
+    function setSoundEnabled(on){
+      ensureAudio();
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+
+      isSoundOn = on;
+      soundBtn.textContent = on ? '🔊 כבה סאונד' : '🔇 הפעל סאונד';
+
+      const now = audioCtx.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setTargetAtTime(on ? 0.95 : 0.0, now, 0.06);
+
+      updateSoundCrossfade(actualValue, true);
+    }
+
+    function updateSoundCrossfade(v, immediate=false){
+      if(!audioCtx || !fearGain || !loveGain) return;
+      const t = clamp(v/100, 0, 1);      // 0=fear(left) -> 1=love(right)
+      const fear = 1 - t;
+      const love = t;
+
+      const now = audioCtx.currentTime;
+      const tau = immediate ? 0.02 : 0.06;
+
+      fearGain.gain.setTargetAtTime(fear * 0.95, now, tau);
+      loveGain.gain.setTargetAtTime(love * 0.95, now, tau);
+
+      // optional small color morph
+      if(fearNodes){
+        fearNodes.hp.frequency.setTargetAtTime(900 + fear * 1600, now, tau);
+        fearNodes.bp.frequency.setTargetAtTime(2200 + fear * 1400, now, tau);
+      }
+      if(loveNodes){
+        loveNodes.lp.frequency.setTargetAtTime(1100 + love * 1400, now, tau);
+      }
+    }
+
+    soundBtn.addEventListener('click', () => setSoundEnabled(!isSoundOn));
+
+    // ==========================================================
+    // RENDER (needle, meter, labels, knob, range)
+    // ==========================================================
+    function render(v){
+      // Dial needle position
+      const rect = dial.getBoundingClientRect();
+      const pad = 12;
+      const x = pad + (v/100) * (rect.width - pad*2);
+      needle.style.left = `${x}px`;
+
+      // Meter
+      fill.style.width = `${v}%`;
+
+      // Knob rotation
+      const rot = -160 + (v/100) * 320;
+      knob.style.setProperty('--knob-rot', `${rot}deg`);
+      knob.setAttribute('aria-valuenow', String(Math.round(v)));
+
+      // Sound
+      updateSoundCrossfade(v);
+    }
+
+    function setTarget(v){
+      targetValue = clamp(v, 0, 100);
+      startAnim();
+    }
+
+    // pointer -> target
+    function valueFromPointer(clientX){
+      const rect = dial.getBoundingClientRect();
+      const pad = 12;
+      const x = clamp(clientX - rect.left, pad, rect.width - pad);
+      return ((x - pad) / (rect.width - pad*2)) * 100;
+    }
+
+    // ==========================================================
+    // INTERACTIONS
+    // ==========================================================
+    let draggingNeedle = false;
+    function startNeedle(e){
+      draggingNeedle = true;
+      const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+      setTarget(valueFromPointer(clientX));
+      e.preventDefault();
+    }
+    function moveNeedle(e){
+      if(!draggingNeedle) return;
+      const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+      setTarget(valueFromPointer(clientX));
+      e.preventDefault();
+    }
+    function endNeedle(){ draggingNeedle = false; }
+
+    needleArea.addEventListener('mousedown', startNeedle);
+    window.addEventListener('mousemove', moveNeedle);
+    window.addEventListener('mouseup', endNeedle);
+
+    needleArea.addEventListener('touchstart', startNeedle, {passive:false});
+    window.addEventListener('touchmove', moveNeedle, {passive:false});
+    window.addEventListener('touchend', endNeedle);
+
+    // Knob sets target (radio feel still applies)
+    let draggingKnob = false;
+    function knobValueFromPointer(clientX, clientY){
+      const r = knob.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      let ang = Math.atan2(dy, dx);
+      let deg = (ang * 180/Math.PI) + 90; // top=0
+      if(deg < -180) deg += 360;
+      deg = clamp(deg, -160, 160);
+      return ((deg + 160) / 320) * 100;
+    }
+
+    function startKnob(e){
+      draggingKnob = true;
+      const t = e.touches ? e.touches[0] : e;
+      setTarget(knobValueFromPointer(t.clientX, t.clientY));
+      e.preventDefault();
+    }
+    function moveKnob(e){
+      if(!draggingKnob) return;
+      const t = e.touches ? e.touches[0] : e;
+      setTarget(knobValueFromPointer(t.clientX, t.clientY));
+      e.preventDefault();
+    }
+    function endKnob(){ draggingKnob = false; }
+
+    knob.addEventListener('mousedown', startKnob);
+    window.addEventListener('mousemove', moveKnob);
+    window.addEventListener('mouseup', endKnob);
+
+    knob.addEventListener('touchstart', startKnob, {passive:false});
+    window.addEventListener('touchmove', moveKnob, {passive:false});
+    window.addEventListener('touchend', endKnob);
+
+    // Keep visuals correct on resize
+    window.addEventListener('resize', () => render(actualValue));
+
+    // Init
+    render(actualValue);
+
+    // Optional: prepare audio context on first gesture (still requires click to enable sound)
+    window.addEventListener('pointerdown', () => { try{ ensureAudio(); }catch(e){} }, {once:true});
+  </script>
+</body>
+</html>
